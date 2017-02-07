@@ -1,29 +1,19 @@
 require('whatwg-fetch')
+require('babel-polyfill')
 
+//Here's how I've shown how to use promises before
 const
-    R = require('ramda'),
-    tap = x => { console.log(x); return x },
-    React = require('react'),
-    ReactDOM = require('react-dom'),
-    {createStore} = require('redux'),
-    reducer = (state = '', action) => {
-        switch(action.type) {
-            case 'ADD_TEXT':
-                return action.text
-            default:
-                return state
-        }
-    },
-    store = createStore(reducer),
-    render = () =>
-        ReactDOM.render(
-            <div>
-                <p>{store.getState()}</p>
-                <input
-                    type="text"
-                    onChange={({target:{value: text}}) => store.dispatch({type: 'ADD_TEXT', text})}/>
-            </div>,
-            document.getElementById('root'))
+    fetchit = (path, payload) =>
+        fetch(path, {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
 
-store.subscribe(render)
-render()
+fetchit('/ajax', { param: 'You are a penguin' })
+    .then(response => response.json())
+    .then(json => console.log('parsed json', json))
+    .catch(ex => console.log('parsing failed', ex))
