@@ -4,25 +4,83 @@
 require('whatwg-fetch');
 require('babel-polyfill');
 
+var tap = function tap(x) {
+    console.log(x);return x;
+};
+
 //Here's how I've shown how to use promises before
-var fetchit = function fetchit(path, payload) {
+var fetchit = function fetchit(path, method, payload) {
     return fetch(path, {
         method: 'post',
         headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: payload ? JSON.stringify(payload) : undefined
     });
 };
 
-fetchit('/ajax', { param: 'You are a penguin' }).then(function (response) {
+fetchit('/ajax', 'post', { param: 'You are a penguin' }).then(function (response) {
     return response.json();
 }).then(function (json) {
     return console.log('parsed json', json);
-}).catch(function (ex) {
-    return console.log('parsing failed', ex);
+}).catch(function (e) {
+    return console.log('parsing failed', e);
 });
+
+//Now we use a function I grabbed from https://www.promisejs.org/generators/
+function async(makeGenerator) {
+    return function () {
+        var generator = makeGenerator.apply(this, arguments);
+
+        function handle(result) {
+            // result => { done: [Boolean], value: [Object] }
+            if (result.done) return tap(Promise.resolve(result.value));
+
+            return Promise.resolve(result.value).then(function (res) {
+                return handle(generator.next(res));
+            }, function (err) {
+                return handle(generator.throw(err));
+            });
+        }
+
+        try {
+            return handle(generator.next());
+        } catch (ex) {
+            return Promise.reject(ex);
+        }
+    };
+}
+
+//And we use async to do the same code in a way that makes your async code look a little more sync
+var fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payload) {
+    var response;
+    return regeneratorRuntime.wrap(function _callee$(_context) {
+        while (1) {
+            switch (_context.prev = _context.next) {
+                case 0:
+                    _context.next = 2;
+                    return fetch(path, {
+                        method: 'post',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: payload ? JSON.stringify(payload) : undefined
+                    });
+
+                case 2:
+                    response = _context.sent;
+
+                case 3:
+                case 'end':
+                    return _context.stop();
+            }
+        }
+    }, _callee, this);
+}));
+
+fetchit2('/ajax', 'post', { param: 'Your mom is a potato' }).then(console.log);
 
 },{"babel-polyfill":2,"whatwg-fetch":298}],2:[function(require,module,exports){
 (function (global){
