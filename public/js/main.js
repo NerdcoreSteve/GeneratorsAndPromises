@@ -31,10 +31,10 @@ fetchit('/ajax', 'post', { param: 'You are a penguin' }).then(function (response
 //Here's how we handle the same async code with generators
 //TODO handle errors with async!!
 var async = function async(starFunc) {
-    var gen = starFunc();
-
     return function () {
-        return arguments;
+        var gen = starFunc.apply(undefined, arguments);
+        //Maybe put a for loop here?
+        return gen.next().value;
     };
 },
     fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payload) {

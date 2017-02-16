@@ -26,14 +26,13 @@ fetchit('/ajax', 'post', { param: 'You are a penguin' })
 //Here's how we handle the same async code with generators
 //TODO handle errors with async!!
 const
-    async = starFunc => {
-        const
-            gen = starFunc()
-
-        return function () {
-            return arguments
-        }
-    },
+    async = starFunc =>
+        function () {
+            const
+                gen = starFunc(...arguments)
+            //Maybe put a for loop here? have a ret val outside then and then return ret val
+            return gen.next().value
+        },
     fetchit2 = async(function* (path, method, payload) {
         yield fetch(
             path,
