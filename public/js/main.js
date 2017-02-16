@@ -28,33 +28,16 @@ fetchit('/ajax', 'post', { param: 'You are a penguin' }).then(function (response
     return console.log('parsing failed', e);
 });
 
-//Now we use a function I grabbed from https://www.promisejs.org/generators/
-function async(makeGenerator) {
+//Here's how we handle the same async code with generators
+//TODO handle errors with async!!
+var async = function async(starFunc) {
+    var gen = starFunc();
+
     return function () {
-        var generator = makeGenerator.apply(this, arguments);
-
-        function handle(result) {
-            // result => { done: [Boolean], value: [Object] }
-            if (result.done) return tap(Promise.resolve(result.value));
-
-            return Promise.resolve(result.value).then(function (res) {
-                return handle(generator.next(res));
-            }, function (err) {
-                return handle(generator.throw(err));
-            });
-        }
-
-        try {
-            return handle(generator.next());
-        } catch (ex) {
-            return Promise.reject(ex);
-        }
+        return arguments;
     };
-}
-
-//And we use async to do the same code in a way that makes your async code look a little more sync
-var fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payload) {
-    var response;
+},
+    fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payload) {
     return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
             switch (_context.prev = _context.next) {
@@ -70,9 +53,6 @@ var fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payl
                     });
 
                 case 2:
-                    response = _context.sent;
-
-                case 3:
                 case 'end':
                     return _context.stop();
             }
@@ -80,7 +60,8 @@ var fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payl
     }, _callee, this);
 }));
 
-fetchit2('/ajax', 'post', { param: 'Your mom is a potato' }).then(console.log);
+//Should be in try catch block?
+console.log(fetchit2('/ajax', 'post', { param: 'You are a penguin' }));
 
 },{"babel-polyfill":2,"whatwg-fetch":298}],2:[function(require,module,exports){
 (function (global){
