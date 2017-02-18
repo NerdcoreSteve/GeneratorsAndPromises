@@ -20,24 +20,32 @@ var fetchit = function fetchit(path, method, payload) {
     });
 };
 
-fetchit('/ajax', 'post', { param: 'You are a penguin' }).then(function (response) {
-    return response.json();
-}).then(function (json) {
-    return console.log('parsed json', json);
-}).catch(function (e) {
-    return console.log('parsing failed', e);
-});
+/*
+fetchit('/ajax', 'post', { param: 'You are a penguin' })
+    .then(response => response.json())
+    .then(json => console.log('parsed json', json))
+    .catch(e => console.log('parsing failed', e))
+*/
 
 //Here's how we handle the same async code with generators
-//TODO handle errors with async!!
 var async = function async(starFunc) {
     return function () {
-        var gen = starFunc.apply(undefined, arguments);
-        //Maybe put a for loop here?
-        return gen.next().value;
+        var handle = function handle(iterator) {
+            return iterator.next().value.then(function (x) {
+                var iteration = iterator.next(x);
+                //Not quite right
+                /*
+                if(!iteration.done) {
+                    handle(iterator)
+                }
+                */
+            });
+        };
+        handle(starFunc.apply(undefined, arguments));
     };
 },
     fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payload) {
+    var response, json;
     return regeneratorRuntime.wrap(function _callee$(_context) {
         while (1) {
             switch (_context.prev = _context.next) {
@@ -53,6 +61,18 @@ var async = function async(starFunc) {
                     });
 
                 case 2:
+                    response = _context.sent;
+
+                    console.log(response);
+                    _context.next = 6;
+                    return response.json();
+
+                case 6:
+                    json = _context.sent;
+
+                    console.log(json);
+
+                case 8:
                 case 'end':
                     return _context.stop();
             }
@@ -61,7 +81,7 @@ var async = function async(starFunc) {
 }));
 
 //Should be in try catch block?
-console.log(fetchit2('/ajax', 'post', { param: 'You are a penguin' }));
+fetchit2('/ajax', 'post', { param: 'You are a penguin' });
 
 },{"babel-polyfill":2,"whatwg-fetch":298}],2:[function(require,module,exports){
 (function (global){

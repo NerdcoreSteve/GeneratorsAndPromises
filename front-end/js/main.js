@@ -18,23 +18,32 @@ const
                 body: payload ? JSON.stringify(payload) : undefined
             })
 
+/*
 fetchit('/ajax', 'post', { param: 'You are a penguin' })
     .then(response => response.json())
     .then(json => console.log('parsed json', json))
     .catch(e => console.log('parsing failed', e))
+*/
 
 //Here's how we handle the same async code with generators
-//TODO handle errors with async!!
 const
     async = starFunc =>
         function () {
             const
-                gen = starFunc(...arguments)
-            //Maybe put a for loop here? have a ret val outside then and then return ret val
-            return gen.next().value
+                handle = iterator =>
+                    iterator.next().value.then(x => {
+                        const iteration = iterator.next(x)
+                        //Not quite right
+                        /*
+                        if(!iteration.done) {
+                            handle(iterator)
+                        }
+                        */
+                    })
+                handle(starFunc(...arguments))
         },
     fetchit2 = async(function* (path, method, payload) {
-        yield fetch(
+        const response = yield fetch(
             path,
             {
                 method: 'post',
@@ -44,7 +53,10 @@ const
                 },
                 body: payload ? JSON.stringify(payload) : undefined
             })
+        console.log(response)
+        const json = yield response.json()
+        console.log(json)
     })
 
 //Should be in try catch block?
-console.log(fetchit2('/ajax', 'post', { param: 'You are a penguin' }))
+fetchit2('/ajax', 'post', { param: 'You are a penguin' })
