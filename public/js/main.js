@@ -3,6 +3,14 @@
 
 require('whatwg-fetch');
 require('babel-polyfill');
+/*TODO
+get rid of fetchit and fetchit2, just call fetch and .then it and call fetch directly in your generator
+mention you didn't handle errors in the in async function
+    async should just execute, not return a function
+I could go to the bother of fixing that, but it's boring and someone else already did it
+show how to use co
+https://github.com/tj/co
+*/
 
 var tap = function tap(x) {
     console.log(x);return x;
@@ -20,28 +28,27 @@ var fetchit = function fetchit(path, method, payload) {
     });
 };
 
-/*
-fetchit('/ajax', 'post', { param: 'You are a penguin' })
-    .then(response => response.json())
-    .then(json => console.log('parsed json', json))
-    .catch(e => console.log('parsing failed', e))
-*/
+fetchit('/ajax', 'post', { param: 'You are a penguin' }).then(function (response) {
+    return response.json();
+}).then(function (json) {
+    return console.log('parsed json', json);
+}).catch(function (e) {
+    return console.log('parsing failed', e);
+});
 
 //Here's how we handle the same async code with generators
 var async = function async(starFunc) {
     return function () {
-        var handle = function handle(iterator) {
-            return iterator.next().value.then(function (x) {
-                var iteration = iterator.next(x);
-                //Not quite right
-                /*
-                if(!iteration.done) {
-                    handle(iterator)
-                }
-                */
-            });
+        var iterator = starFunc.apply(undefined, arguments),
+            iteration = iterator.next(),
+            promise = iteration.value,
+            handle = function handle(x) {
+            var iteration = iterator.next(x);
+            if (!iteration.done) {
+                iteration.value.then(handle);
+            }
         };
-        handle(starFunc.apply(undefined, arguments));
+        promise.then(handle);
     };
 },
     fetchit2 = async(regeneratorRuntime.mark(function _callee(path, method, payload) {
@@ -62,17 +69,15 @@ var async = function async(starFunc) {
 
                 case 2:
                     response = _context.sent;
-
-                    console.log(response);
-                    _context.next = 6;
+                    _context.next = 5;
                     return response.json();
 
-                case 6:
+                case 5:
                     json = _context.sent;
 
                     console.log(json);
 
-                case 8:
+                case 7:
                 case 'end':
                     return _context.stop();
             }
