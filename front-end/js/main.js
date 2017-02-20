@@ -68,7 +68,7 @@ co(function* () {
     console.log(json)
 })
 
-//It's co even returns a promise from the end of the promise chain so you can catch errors
+//co even returns a promise from the end of the promise chain so you can catch errors
 co(function* () {
     const
         response = yield fetch(
