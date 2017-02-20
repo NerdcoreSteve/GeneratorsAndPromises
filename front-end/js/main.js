@@ -1,67 +1,87 @@
 require('whatwg-fetch')
 require('babel-polyfill')
-/*TODO
-get rid of fetchit and fetchit2, just call fetch and .then it and call fetch directly in your generator
-mention you didn't handle errors in the in async function
-    async should just execute, not return a function
-I could go to the bother of fixing that, but it's boring and someone else already did it
-show how to use co
-https://github.com/tj/co
-*/
-
-const
-    tap = x => { console.log(x); return x }
 
 //Here's how I've shown how to use promises before
+fetch(
+    '/ajax',
+    {
+        method: 'post',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ param: 'You are a penguin' })
+    })
+    .then(response => response.json())
+    .then(console.log)
+
+//Here's how we handle the same async code with generators
 const
-    fetchit = (path, method, payload) =>
-        fetch(
-            path,
+    async = starFunc => {
+        const
+            iterator = starFunc(),
+            handle = x => {
+                const iteration = iterator.next(x)
+                if(!iteration.done) {
+                    iteration.value.then(handle)
+                }
+            }
+        iterator.next().value.then(handle)
+    }
+
+async(function* () {
+    const
+        response = yield fetch(
+            '/ajax',
             {
                 method: 'post',
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
-                body: payload ? JSON.stringify(payload) : undefined
-            })
+                body: JSON.stringify({ param: 'Bananas are my friends' })
+            }),
+        json = yield response.json()
+    console.log(json)
+})
 
-fetchit('/ajax', 'post', { param: 'You are a penguin' })
-    .then(response => response.json())
-    .then(json => console.log('parsed json', json))
-    .catch(e => console.log('parsing failed', e))
-
-//Here's how we handle the same async code with generators
+//I've not really bothered with handling errors in either of the above examples
+//I could do, but it's mostly boring work that doesn't teach us much
+//And there's already a library that does this for us with the generator approach
+//https://github.com/tj/co
 const
-    async = starFunc =>
-        function () {
-            const
-                iterator = starFunc(...arguments),
-                iteration = iterator.next(),
-                promise = iteration.value,
-                handle = x => {
-                    const iteration = iterator.next(x)
-                    if(!iteration.done) {
-                        iteration.value.then(handle)
-                    }
-                }
-            promise.then(handle)
-        },
-    fetchit2 = async(function* (path, method, payload) {
-        const
-            response = yield fetch(
-                path,
-                {
-                    method: 'post',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: payload ? JSON.stringify(payload) : undefined
-                }),
-            json = yield response.json()
-        console.log(json)
-    })
+    co = require('co')
 
-//Should be in try catch block?
-fetchit2('/ajax', 'post', { param: 'You are a penguin' })
+co(function* () {
+    const
+        response = yield fetch(
+            '/ajax',
+            {
+                method: 'post',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ param: 'Your mom is a potato' })
+            }),
+        json = yield response.json()
+    console.log(json)
+})
+
+//It's co even returns a promise from the end of the promise chain so you can catch errors
+co(function* () {
+    const
+        response = yield fetch(
+            '/banana',
+            {
+                method: 'post',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ param: 'Your mom is a potato' })
+            }),
+        json = yield response.json()
+    console.log(json)
+})
+.catch(console.log)
